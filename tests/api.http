@@ -1,0 +1,35 @@
+### ==========================================
+### 1. ĐĂNG KÝ (Tạo user mới nếu cần)
+### ==========================================
+POST http://localhost:3000/api/register
+Content-Type: application/json
+
+{
+    "email": "nam_test_flow@test.com",
+    "password": "123"
+}
+
+### ==========================================
+### 2. ĐĂNG NHẬP (QUAN TRỌNG: Chạy cái này trước để lấy Token)
+### ==========================================
+# @name loginRequest
+POST http://localhost:3000/api/login
+Content-Type: application/json
+
+{
+    "email": "nam_test_flow@test.com",
+    "password": "123"
+}
+
+### ==========================================
+### 3. MUA HÀNG (Token sẽ tự động được điền vào đây)
+### ==========================================
+@authToken = {{loginRequest.response.body.token}}
+
+POST http://localhost:3000/api/buy
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+    "flashSaleId": 2
+}

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flash Sale Pro ⚡</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { width: 90%; max-width: 1000px; display: flex; flex-direction: column; align-items: center; }
+        .card { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 350px; text-align: center; margin-bottom: 20px; }
+        
+        /* Grid layout cho danh sách sản phẩm */
+        .grid-products { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; width: 100%; }
+        .product-card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); text-align: center; transition: transform 0.2s; }
+        .product-card:hover { transform: translateY(-5px); }
+        
+        .p-name { font-size: 1.2rem; font-weight: bold; color: #333; margin: 10px 0; }
+        .p-price-box { margin: 15px 0; }
+        .old-price { text-decoration: line-through; color: #95a5a6; font-size: 0.9rem; }
+        .sale-price { color: #e74c3c; font-size: 1.5rem; font-weight: bold; }
+        .stock-tag { background: #ecf0f1; padding: 5px 10px; border-radius: 20px; font-size: 0.9rem; color: #2c3e50; display: inline-block; margin-bottom: 15px; }
+        
+        input { width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; }
+        button { background: #e74c3c; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        button:hover { opacity: 0.9; }
+        button:disabled { background: #bdc3c7; cursor: not-allowed; }
+        
+        .hidden { display: none !important; } /* Quan trọng: thêm !important */
+        .link { color: blue; cursor: pointer; font-size: 0.9rem; margin-top: 10px; display: block;}
+        .header { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="loginScreen" class="card">
+            <h2>Đăng Nhập 🔐</h2>
+            <input type="email" id="email" placeholder="Email" value="hacker@test.com">
+            <input type="password" id="password" placeholder="Mật khẩu" value="123456">
+            <button onclick="handleLogin()">VÀO MUA HÀNG</button>
+            <span class="link" onclick="toggleScreen('register')">Chưa có tài khoản? Đăng ký</span>
+            <div id="loginMsg" style="color: red; margin-top: 10px;"></div>
+        </div>
+
+        <div id="registerScreen" class="card hidden">
+            <h2>Đăng Ký 📝</h2>
+            <input type="email" id="regEmail" placeholder="Email mới">
+            <input type="password" id="regPass" placeholder="Mật khẩu mới">
+            <button onclick="handleRegister()">TẠO TÀI KHOẢN</button>
+            <span class="link" onclick="toggleScreen('login')">Quay lại đăng nhập</span>
+            <div id="regMsg" style="margin-top: 10px;"></div>
+        </div>
+
+        <div id="shopScreen" class="hidden" style="width: 100%;">
+            <div class="header">
+                <h1 style="color: #e74c3c; margin: 0;">SĂN DEAL HÔM NAY 🔥</h1>
+                <button onclick="logout()" style="background: #95a5a6; width: auto; padding: 8px 15px;">Đăng xuất</button>
+            </div>
+
+            <div id="productList" class="grid-products">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        const API = 'http://localhost:3000/api';
+        let token = localStorage.getItem('token');
+
+        if(token) showShop();
+
+        function toggleScreen(screen) {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('registerScreen').classList.add('hidden');
+            document.getElementById('shopScreen').classList.add('hidden');
+            
+            if(screen === 'login') document.getElementById('loginScreen').classList.remove('hidden');
+            if(screen === 'register') document.getElementById('registerScreen').classList.remove('hidden');
+            if(screen === 'shop') document.getElementById('shopScreen').classList.remove('hidden');
+        }
+
+        async function handleLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            // ... (Logic login cũ giữ nguyên)
+            const res = await fetch(`${API}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await res.json();
+            if(res.ok) {
+                token = data.token;
+                localStorage.setItem('token', token);
+                showShop();
+            } else {
+                document.getElementById('loginMsg').innerText = data.message;
+            }
+        }
+
+        async function handleRegister() {
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPass').value;
+            // ... (Logic register cũ giữ nguyên)
+            const res = await fetch(`${API}/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await res.json();
+            const msg = document.getElementById('regMsg');
+            if(res.ok) {
+                msg.style.color = 'green';
+                msg.innerText = "Đăng ký thành công!";
+                setTimeout(() => toggleScreen('login'), 1500);
+            } else {
+                msg.style.color = 'red';
+                msg.innerText = data.message;
+            }
+        }
+
+        function showShop() {
+            toggleScreen('shop');
+            fetchProducts();
+            setInterval(fetchProducts, 2000); // Cập nhật realtime
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            location.reload();
+        }
+
+        // --- Logic Hiển thị & Mua Hàng ---
+        async function fetchProducts() {
+            try {
+                const res = await fetch(`${API}/info`);
+                if(res.ok) {
+                    const products = await res.json();
+                    renderProductList(products);
+                }
+            } catch(e) {}
+        }
+
+        function renderProductList(products) {
+            const listDiv = document.getElementById('productList');
+            
+            if (products.length === 0) {
+                listDiv.innerHTML = '<div style="text-align:center; width:100%">Chưa có đợt Flash Sale nào đang diễn ra!</div>';
+                return;
+            }
+
+            // Tạo HTML cho từng sản phẩm
+            const html = products.map(p => {
+                // Định dạng tiền tệ
+                const priceFormat = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
+                const isOutOfStock = p.available_stock <= 0;
+                
+                return `
+                    <div class="product-card">
+                        <div style="background: #333; color: white; padding: 30px; border-radius: 10px; margin-bottom: 15px;">
+                            ${p.product_name}
+                        </div>
+                        
+                        <div class="p-price-box">
+                            <div class="old-price">Gốc: ${priceFormat.format(p.original_price)}</div>
+                            <div class="sale-price">${priceFormat.format(p.sale_price)}</div>
+                        </div>
+
+                        <div class="stock-tag">
+                            Kho còn: <strong>${p.available_stock}</strong>
+                        </div>
+
+                        <button 
+                            onclick="buyProduct(${p.flash_sale_id}, this)" 
+                            ${isOutOfStock ? 'disabled' : ''}
+                            style="${isOutOfStock ? 'background: #95a5a6' : ''}"
+                        >
+                            ${isOutOfStock ? 'HẾT HÀNG' : 'MUA NGAY 🚀'}
+                        </button>
+                        <div class="msg-box-${p.flash_sale_id}" style="margin-top:10px; font-size: 0.9rem; min-height: 20px;"></div>
+                    </div>
+                `;
+            }).join('');
+
+            // Chỉ cập nhật DOM nếu có sự thay đổi lớn (để tránh giật khi đang bấm nút)
+            // Ở đây mình thay thế luôn để đơn giản hóa code
+            // Mẹo: Trong thực tế nên so sánh data trước khi render lại
+            
+            // Tuy nhiên, để tránh reset lại cái nút "Đang xử lý..." khi user vừa bấm
+            // Ta chỉ update lại số lượng kho thôi, nhưng để đơn giản cho Intern Project thì innerHTML là OK.
+            // Để user không bị giật nút, ta có thể kiểm tra xem nút đó có đang disabled (đang bấm) ko.
+            // Nhưng cách tốt nhất cho bài này là: Cứ render lại, vì fetchProducts chạy 2s/lần.
+            
+            // Lưu ý: Việc render lại toàn bộ mỗi 2s sẽ làm mất trạng thái thông báo "Mua thành công"
+            // -> Cần 1 giải pháp tốt hơn: Tách việc update kho ra khỏi việc render khung.
+            // Nhưng để code ngắn gọn, ta chấp nhận việc thông báo sẽ biến mất sau 2s.
+            
+            // Cách fix tạm thời: Kiểm tra nếu nội dung HTML thay đổi thì mới update
+             if (listDiv.innerHTML.length < 100 || !document.querySelector('button:disabled')) {
+                 // Logic check sơ sài để tránh render lại khi đang bấm mua
+                 // (Dòng này chỉ là ví dụ, bạn có thể bỏ qua và chấp nhận nó reload)
+             }
+             
+             // Phiên bản đơn giản nhất:
+             // listDiv.innerHTML = html; 
+             // Nhưng sẽ bị mất thông báo.
+             
+             // Phiên bản nâng cao: Chỉ update số lượng text
+             updateOrRender(products);
+        }
+
+        // Hàm thông minh: Nếu thẻ đã có thì chỉ update số, chưa có thì vẽ mới
+        function updateOrRender(products) {
+            const listDiv = document.getElementById('productList');
+            
+            // Nếu chưa có sản phẩm nào, vẽ mới hoàn toàn
+            if (listDiv.children.length !== products.length) {
+                const html = products.map(p => generateCardHTML(p)).join('');
+                listDiv.innerHTML = html;
+                return;
+            }
+
+            // Nếu đã có, chỉ đi cập nhật số liệu từng cái
+            products.forEach((p, index) => {
+                const card = listDiv.children[index];
+                // Cập nhật số lượng
+                const stockTag = card.querySelector('.stock-tag strong');
+                if(stockTag) stockTag.innerText = p.available_stock;
+                
+                // Cập nhật trạng thái nút (Nếu hết hàng)
+                const btn = card.querySelector('button');
+                if(p.available_stock <= 0 && !btn.disabled) {
+                    btn.disabled = true;
+                    btn.innerText = "HẾT HÀNG";
+                    btn.style.background = "#95a5a6";
+                }
+            });
+        }
+
+        function generateCardHTML(p) {
+            const priceFormat = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
+            const isOutOfStock = p.available_stock <= 0;
+            return `
+                <div class="product-card" id="card-${p.flash_sale_id}">
+                    <div style="background: #333; color: white; padding: 30px; border-radius: 10px; margin-bottom: 15px;">
+                        ${p.product_name}
+                    </div>
+                    <div class="p-price-box">
+                        <div class="old-price">Gốc: ${priceFormat.format(p.original_price)}</div>
+                        <div class="sale-price">${priceFormat.format(p.sale_price)}</div>
+                    </div>
+                    <div class="stock-tag">Kho còn: <strong>${p.available_stock}</strong></div>
+                    <button onclick="buyProduct(${p.flash_sale_id}, this)" ${isOutOfStock ? 'disabled style="background:#95a5a6"' : ''}>
+                        ${isOutOfStock ? 'HẾT HÀNG' : 'MUA NGAY 🚀'}
+                    </button>
+                    <div class="msg-box" style="margin-top:10px; font-weight:bold;"></div>
+                </div>
+            `;
+        }
+
+        async function buyProduct(saleId, btn) {
+            const card = document.getElementById(`card-${saleId}`);
+            const msgBox = card.querySelector('.msg-box');
+            
+            btn.disabled = true;
+            btn.innerText = "Đang xử lý...";
+            msgBox.innerText = "";
+
+            try {
+                const res = await fetch(`${API}/buy`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ flashSaleId: saleId })
+                });
+
+                const data = await res.json();
+                msgBox.innerText = data.message;
+                msgBox.style.color = res.ok ? 'green' : 'red';
+
+                if(res.ok) {
+                    fetchProducts(); // Cập nhật kho ngay
+                }
+            } catch(e) {
+                msgBox.innerText = "Lỗi mạng";
+                msgBox.style.color = "red";
+            } finally {
+                // Mở lại nút sau 1s nếu chưa hết hàng (dựa vào lần fetch tới)
+                setTimeout(() => {
+                    if (btn.innerText !== "HẾT HÀNG") {
+                        btn.disabled = false;
+                        btn.innerText = "MUA NGAY 🚀";
+                    }
+                }, 1000);
+            }
+        }
+    </script>
+</body>
+</html>
