@@ -23,7 +23,7 @@ A high-load Flash Sale processing system that ensures **Data Consistency** and e
 ### Main Steps to Run
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/username/flash-sale-engine.git
+   git clone https://github.com/Kiriam1601/flash-sale-engine.git
    cd flash-sale-engine
 
 2. **Start the system:**
