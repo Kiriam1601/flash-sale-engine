@@ -89,13 +89,3 @@ docker exec -it flash-sale-db psql -U nam_admin -d flash_sale_db
 * `SELECT * FROM users;` : Xem danh sách người dùng.
 * `SELECT * FROM flash_sales;` : Xem kho hàng.
 
-## 🧪 Kịch bản Test (Stress Test)
-
-Dự án bao gồm script `tests/stress-test.js` để giả lập tình huống nhiều người dùng bấm mua cùng lúc.
-
-**Chạy test:**
-
-```bash
-node tests/stress-test.js
-
-```
