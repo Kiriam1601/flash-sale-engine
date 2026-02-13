@@ -28,7 +28,8 @@ A high-load Flash Sale processing system that ensures **Data Consistency** and e
 
 2. **Start the system:**
    ```bash
-   docker-compose up --build
+   docker-compose up -d
+   docker-compose logs -f app
 
 
 * Once running, access the Web interface at: `http://localhost:3000`
