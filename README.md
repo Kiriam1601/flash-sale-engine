@@ -1,91 +1,88 @@
-
 # ⚡ High-Performance Flash Sale Engine
 
-Hệ thống xử lý bán hàng chớp nhoáng (Flash Sale) chịu tải cao, đảm bảo tính toàn vẹn dữ liệu (Data Consistency) và giải quyết triệt để vấn đề **Race Condition**.
+A high-load Flash Sale processing system that ensures **Data Consistency** and effectively resolves **Race Conditions**.
 
-## 🚀 Tính năng nổi bật
-* **Xử lý đồng thời (Concurrency):** Giải quyết bài toán hàng trăm người cùng mua 1 sản phẩm cuối cùng bằng kỹ thuật **Optimistic/Pessimistic Locking** (Atomic Update) trong PostgreSQL.
-* **Bảo mật (Security):** Xác thực người dùng bằng **JWT (JSON Web Token)** và mã hóa mật khẩu với **Bcrypt**.
-* **RESTful API:** Cấu trúc API chuẩn, dễ dàng mở rộng.
-* **Containerization:** Đóng gói toàn bộ môi trường (Node.js + PostgreSQL) bằng **Docker & Docker Compose**, triển khai chỉ với 1 lệnh.
-* **Frontend:** Giao diện Real-time cập nhật tồn kho liên tục.
+## 🚀 Key Features
+* **Concurrency Handling:** Solves the problem of hundreds of users purchasing the last item simultaneously using **Optimistic/Pessimistic Locking** (Atomic Update) techniques in PostgreSQL.
+* **Security:** User authentication via **JWT (JSON Web Token)** and password encryption with **Bcrypt**.
+* **RESTful API:** Standard API structure, easily scalable.
+* **Containerization:** Encapsulates the entire environment (Node.js + PostgreSQL) using **Docker & Docker Compose**, deployable with a single command.
+* **Frontend:** Real-time interface with continuous stock updates.
 
-## 🛠️ Công nghệ sử dụng
+## 🛠️ Tech Stack
 * **Backend:** Node.js, Express.js
 * **Database:** PostgreSQL (Connection Pooling)
 * **DevOps:** Docker, Docker Compose
 * **Tools:** Postman/REST Client (API Testing), JMeter/K6 (Load Testing)
 
-## ⚙️ Cài đặt & Chạy dự án
+## ⚙️ Installation & Setup
 
-### Yêu cầu
-* Docker & Docker Compose đã được cài đặt.
+### Prerequisites
+* Docker & Docker Compose must be installed.
 
-### Các bước chạy chính
-1. **Clone dự án:**
+### Main Steps to Run
+1. **Clone the repository:**
    ```bash
    git clone [https://github.com/username/flash-sale-engine.git](https://github.com/username/flash-sale-engine.git)
    cd flash-sale-engine
 
-2. **Khởi động hệ thống:**
+2. **Start the system:**
    ```bash
    docker-compose up --build
 
-   ```
 
-* Sau khi chạy xong, truy cập Web tại: `http://localhost:3000`
+* Once running, access the Web interface at: `http://localhost:3000`
 
+---
 
+## 🔧 Common Management & Debug Commands
 
-## 🔧 Các lệnh quản lý & Debug thường dùng
+Below are useful commands to manage containers and check data during development.
 
-Dưới đây là các lệnh hữu ích để quản lý container và kiểm tra dữ liệu trong quá trình phát triển.
+### 1. Check System Status
 
-### 1. Kiểm tra trạng thái hệ thống
-
-Xem danh sách các container đang chạy và trạng thái của chúng:
+View the list of running containers and their status:
 
 ```bash
 docker-compose ps
 
 ```
 
-### 2. Xem Logs ứng dụng (Debug)
+### 2. View Application Logs (Debug)
 
-Theo dõi log thời gian thực của backend để bắt lỗi:
+Monitor backend real-time logs for debugging:
 
 ```bash
 docker-compose logs -f app
 
 ```
 
-*(Nhấn `Ctrl + C` để thoát)*
+*(Press `Ctrl + C` to exit)*
 
-### 3. Reset hệ thống (Dọn dẹp & Build lại)
+### 3. System Reset (Clean & Rebuild)
 
-Sử dụng khi bạn muốn xóa sạch dữ liệu cũ (Database), xóa các image lỗi và khởi động lại từ đầu:
+Use this when you want to wipe old data (Database), remove error images, and restart from scratch:
 
 ```bash
-# Xóa container và volume (dữ liệu DB sẽ mất)
+# Remove containers and volumes (DB data will be lost)
 docker-compose down -v
 
-# Build lại và khởi chạy ngầm (detached mode)
+# Rebuild and run in background (detached mode)
 docker-compose up --build -d
 
 ```
 
-### 4. Truy cập Database trực tiếp
+### 4. Direct Database Access
 
-Vào bên trong container PostgreSQL để chạy các câu lệnh SQL thủ công:
+Access the PostgreSQL container to run manual SQL commands:
 
 ```bash
 docker exec -it flash-sale-db psql -U nam_admin -d flash_sale_db
 
 ```
 
-**Các lệnh SQL hữu ích:**
+**Useful SQL commands:**
 
-* `\dt` : Xem danh sách các bảng.
-* `SELECT * FROM users;` : Xem danh sách người dùng.
-* `SELECT * FROM flash_sales;` : Xem kho hàng.
-
+* `\dt` : List all tables.
+* `SELECT * FROM users;` : View user list.
+* `SELECT * FROM flash_sales;` : View inventory/stock.
