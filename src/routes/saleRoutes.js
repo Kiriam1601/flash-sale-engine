@@ -13,4 +13,6 @@ router.post('/login', authController.login);
 
 router.post('/buy', authMiddleware, saleController.buyProduct);
 
+router.get('/history', authMiddleware, saleController.getOrderHistory);
+
 module.exports = router;

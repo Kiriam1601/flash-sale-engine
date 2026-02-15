@@ -28,6 +28,14 @@
         .hidden { display: none !important; } /* Quan trọng: thêm !important */
         .link { color: blue; cursor: pointer; font-size: 0.9rem; margin-top: 10px; display: block;}
         .header { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        /* Thêm vào trong <style> */
+        .history-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .history-table th, .history-table td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
+        .history-table th { background-color: #f8f9fa; color: #333; }
+        .history-table tr:hover { background-color: #f1f1f1; }
+        .time-col { color: #7f8c8d; font-size: 0.9em; }
+        .price-col { color: #e74c3c; font-weight: bold; }
+        .btn-nav { background: #34495e; margin-right: 10px; width: auto; padding: 8px 15px; display: inline-block; }
     </style>
 </head>
 <body>
@@ -54,11 +62,35 @@
         <div id="shopScreen" class="hidden" style="width: 100%;">
             <div class="header">
                 <h1 style="color: #e74c3c; margin: 0;">SĂN DEAL HÔM NAY 🔥</h1>
-                <button onclick="logout()" style="background: #95a5a6; width: auto; padding: 8px 15px;">Đăng xuất</button>
-            </div>
-
-            <div id="productList" class="grid-products">
+                <div>
+                    <button onclick="showHistory()" class="btn-nav">📜 Lịch sử</button>
+                    <button onclick="logout()" class="btn-nav">Đăng xuất</button>
                 </div>
+            </div>
+            <div id="productList" class="grid-products"></div>
+        </div>
+
+        <div id="historyScreen" class="hidden" style="width: 100%; max-width: 800px;">
+            <div class="header">
+                <h2>Lịch Sử Mua Hàng 🛍️</h2>
+                <button onclick="showShop()" class="btn-nav">⬅️ Quay lại</button>
+            </div>
+            <div class="card" style="width: 100%; padding: 0;">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th>Giá mua</th>
+                            <th>Thời gian</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyList">
+                        </tbody>
+                </table>
+                <div id="emptyHistory" style="padding: 20px; text-align: center; display: none;">
+                    Bạn chưa mua gì cả. Săn sale đi! 🚀
+                </div>
+            </div>
         </div>
     </div>
 
@@ -72,10 +104,12 @@
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('registerScreen').classList.add('hidden');
             document.getElementById('shopScreen').classList.add('hidden');
+            document.getElementById('historyScreen').classList.add('hidden'); // <--- Thêm dòng này
             
             if(screen === 'login') document.getElementById('loginScreen').classList.remove('hidden');
             if(screen === 'register') document.getElementById('registerScreen').classList.remove('hidden');
             if(screen === 'shop') document.getElementById('shopScreen').classList.remove('hidden');
+            if(screen === 'history') document.getElementById('historyScreen').classList.remove('hidden'); // <--- Thêm dòng này
         }
 
         async function handleLogin() {
@@ -238,20 +272,70 @@
 
         function generateCardHTML(p) {
             const priceFormat = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
+            
+            // Logic phân loại:
+            // 1. isRealFlashSale: Có giảm giá thật (Giá bán < Giá gốc)
+            // 2. Cả 2 loại đều dùng chung p.flash_sale_id để trừ kho
+            const isRealFlashSale = p.sale_price < p.original_price;
             const isOutOfStock = p.available_stock <= 0;
+
+            // --- Cấu hình giao diện (Màu sắc, Text) ---
+            let badgeHTML = '';
+            let priceHTML = '';
+            let btnStyle = '';
+            let btnText = '';
+
+            if (isRealFlashSale) {
+                // 🔥 GIAO DIỆN SẢN PHẨM SALE
+                badgeHTML = `<span style="position: absolute; top: 10px; right: 10px; background: red; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">⚡ -${Math.round((1 - p.sale_price/p.original_price)*100)}%</span>`;
+                
+                priceHTML = `
+                    <div class="old-price">Gốc: ${priceFormat.format(p.original_price)}</div>
+                    <div class="sale-price" style="color: #e74c3c;">${priceFormat.format(p.sale_price)}</div>
+                `;
+                
+                btnStyle = isOutOfStock ? 'background:#95a5a6' : 'background: #e74c3c;'; // Màu đỏ
+                btnText = isOutOfStock ? 'HẾT SUẤT 🔥' : 'SĂN NGAY 🚀';
+
+            } else {
+                // 🛒 GIAO DIỆN SẢN PHẨM THƯỜNG (Giá gốc)
+                badgeHTML = ''; // Không hiện tem giảm giá
+                
+                priceHTML = `
+                    <div class="old-price" style="visibility: hidden;">.</div> <div class="sale-price" style="color: #2c3e50;">${priceFormat.format(p.original_price)}</div>
+                `;
+                
+                btnStyle = isOutOfStock ? 'background:#95a5a6' : 'background: #3498db;'; // Màu xanh dương
+                btnText = isOutOfStock ? 'TẠM HẾT HÀNG' : 'MUA NGAY 🛒';
+            }
+
+            // --- Render HTML ---
             return `
                 <div class="product-card" id="card-${p.flash_sale_id}">
+                    ${badgeHTML}
+                    
                     <div style="background: #333; color: white; padding: 30px; border-radius: 10px; margin-bottom: 15px;">
                         ${p.product_name}
                     </div>
+                    
                     <div class="p-price-box">
-                        <div class="old-price">Gốc: ${priceFormat.format(p.original_price)}</div>
-                        <div class="sale-price">${priceFormat.format(p.sale_price)}</div>
+                        ${priceHTML}
                     </div>
-                    <div class="stock-tag">Kho còn: <strong>${p.available_stock}</strong></div>
-                    <button onclick="buyProduct(${p.flash_sale_id}, this)" ${isOutOfStock ? 'disabled style="background:#95a5a6"' : ''}>
-                        ${isOutOfStock ? 'HẾT HÀNG' : 'MUA NGAY 🚀'}
+
+                    <div class="stock-tag" style="background: #ecf0f1; color: #333;">
+                        Kho còn: <strong>${p.available_stock}</strong>
+                    </div>
+
+                    <button 
+                        onclick="buyProduct(${p.flash_sale_id}, this)" 
+                        ${isOutOfStock ? 'disabled' : ''}
+                        style="${btnStyle} color: white;"
+                    >
+
+
+                    ${btnText}
                     </button>
+                    
                     <div class="msg-box" style="margin-top:10px; font-weight:bold;"></div>
                 </div>
             `;
@@ -293,6 +377,46 @@
                         btn.innerText = "MUA NGAY 🚀";
                     }
                 }, 1000);
+            }
+        }
+        
+        async function showHistory() {
+            toggleScreen('history');
+            const tbody = document.getElementById('historyList');
+            const emptyMsg = document.getElementById('emptyHistory');
+            
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center">Đang tải...</td></tr>';
+
+            try {
+                const res = await fetch(`${API}/history`, {
+                    headers: { 'Authorization': `Bearer ${token}` } // Phải gửi Token
+                });
+                
+                if(res.ok) {
+                    const orders = await res.json();
+                    
+                    if (orders.length === 0) {
+                        tbody.innerHTML = '';
+                        emptyMsg.style.display = 'block';
+                    } else {
+                        emptyMsg.style.display = 'none';
+                        const priceFormat = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
+
+                        tbody.innerHTML = orders.map(order => {
+                            // Format ngày giờ: 15/02/2026 14:30
+                            const date = new Date(order.created_at).toLocaleString('vi-VN');
+                            return `
+                                <tr>
+                                    <td style="font-weight: 500;">${order.product_name}</td>
+                                    <td class="price-col">${priceFormat.format(order.total_price)}</td>
+                                    <td class="time-col">${date}</td>
+                                </tr>
+                            `;
+                        }).join('');
+                    }
+                }
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="3" style="color:red">Lỗi tải dữ liệu</td></tr>';
             }
         }
     </script>
