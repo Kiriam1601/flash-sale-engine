@@ -10,18 +10,6 @@ exports.buyProduct = async (req, res) => {
 
     try {
         await client.query('BEGIN'); // Bắt đầu giao dịch
-
-        // --- Logic chặn mua 2 lần ---
-        const checkOrder = await client.query(
-            'SELECT * FROM orders WHERE user_id = $1 AND flash_sale_id = $2',
-            [userId, flashSaleId]
-        );
-
-        if (checkOrder.rows.length > 0) {
-            await client.query('ROLLBACK');
-            return res.status(400).json({ message: 'Bạn đã mua rồi, nhường cho người khác nhé!' });
-        }
-
         // --- Logic trừ kho ---
         const updateResult = await client.query(
             `UPDATE flash_sales 
