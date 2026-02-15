@@ -56,4 +56,4 @@ INSERT INTO flash_sales (product_id, sale_price, total_stock, available_stock, s
 
 INSERT INTO products (name, sku, price) VALUES ('Samsung S24 Ultra', 'SS-S24U', 25000000);
 INSERT INTO flash_sales (product_id, sale_price, total_stock, available_stock, start_time, end_time) 
-VALUES (2, 5000, 50, 50, NOW(), NOW() + INTERVAL '1 day');
+VALUES (2, 25000000, 50, 50, NOW(), NOW() + INTERVAL '1 day');

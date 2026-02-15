@@ -47,19 +47,18 @@ exports.buyProduct = async (req, res) => {
 // 2. Chức năng Lấy thông tin 
 exports.getSaleInfo = async (req, res) => {
     try {
-        // JOIN bảng flash_sales với products để lấy tên và giá gốc
         const queryText = `
             SELECT 
                 fs.id as flash_sale_id,
-                fs.sale_price,
+                COALESCE(fs.sale_price, p.price) as sale_price,
                 fs.available_stock,
                 p.name as product_name,
                 p.price as original_price,
                 p.sku
-            FROM flash_sales fs
-            JOIN products p ON fs.product_id = p.id
-            WHERE fs.status = 'active' AND fs.end_time > NOW()
-            ORDER BY fs.id DESC
+            FROM products p
+            LEFT JOIN flash_sales fs 
+            ON p.id = fs.product_id AND fs.status = 'active'
+            ORDER BY fs.id DESC NULLS LAST
         `;
         
         const { rows } = await db.query(queryText);
@@ -70,5 +69,30 @@ exports.getSaleInfo = async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Lỗi server' });
+    }
+};
+
+// lấy lich sử mua hàng của người dùng
+exports.getOrderHistory = async (req, res) => {
+    const userId = req.user.id; // Lấy ID từ Token
+
+    try {
+        const queryText = `
+            SELECT 
+                p.name as product_name,
+                o.total_price,
+                o.created_at
+            FROM orders o
+            JOIN flash_sales fs ON o.flash_sale_id = fs.id
+            JOIN products p ON fs.product_id = p.id
+            WHERE o.user_id = $1
+            ORDER BY o.created_at DESC
+        `;
+        
+        const { rows } = await db.query(queryText, [userId]);
+        res.json(rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Lỗi lấy lịch sử' });
     }
 };
